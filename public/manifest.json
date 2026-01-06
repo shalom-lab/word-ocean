@@ -1,0 +1,30 @@
+{
+    "name": "词海 - Word Ocean",
+    "short_name": "词海",
+    "description": "基于语义相似度的单词学习工具，通过词根、语义和拼写关联帮助记忆单词",
+    "start_url": "/word-ocean/",
+    "scope": "/word-ocean/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#9333ea",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/word-ocean/icons/icon192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/word-ocean/icons/icon512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "education",
+        "utilities"
+    ],
+    "lang": "zh-CN"
+}
