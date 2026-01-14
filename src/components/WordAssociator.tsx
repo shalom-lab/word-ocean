@@ -136,9 +136,30 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
     }
   }, []);
 
+  // 记录用户是否已经有过交互（用于移动端自动播放限制）
+  const hasUserInteracted = useRef(false);
+
+  // 监听用户交互
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      hasUserInteracted.current = true;
+      // 移除监听器，只需要一次交互即可
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
+
   // 当选中单词时自动播放美音
   useEffect(() => {
-    if (selectedWord) {
+    if (selectedWord && hasUserInteracted.current) {
       // 延迟一点播放，确保页面已经渲染
       const timer = setTimeout(() => {
         speakText(selectedWord.word, 'en-US');
