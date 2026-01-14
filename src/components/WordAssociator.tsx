@@ -122,7 +122,12 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
 
   // 语音播放函数
   const speakText = useCallback((text: string, lang: 'en-US' | 'en-GB' = 'en-US') => {
-    if ('speechSynthesis' in window) {
+    if (!('speechSynthesis' in window)) {
+      console.warn('当前浏览器不支持 Speech Synthesis API');
+      return;
+    }
+
+    try {
       // 停止当前播放
       window.speechSynthesis.cancel();
       
@@ -132,7 +137,19 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
       utterance.pitch = 1;
       utterance.volume = 1;
       
+      // 添加错误处理
+      utterance.onerror = (event) => {
+        console.error('语音播放错误:', event);
+      };
+      
+      utterance.onend = () => {
+        // 播放完成
+      };
+      
+      // 在移动端，确保在用户交互上下文中调用
       window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('语音播放失败:', error);
     }
   }, []);
 
@@ -480,8 +497,12 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
                               <div className="flex items-center justify-between mb-2">
                                 <div className="font-semibold text-slate-800 text-base">{p.phrase}</div>
                                 <button
-                                  onClick={() => speakText(p.phrase, 'en-US')}
-                                  className="p-1.5 hover:bg-slate-200 rounded-full transition-colors flex-shrink-0"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    hasUserInteracted.current = true; // 标记用户已交互
+                                    speakText(p.phrase, 'en-US');
+                                  }}
+                                  className="p-1.5 hover:bg-slate-200 rounded-full transition-colors flex-shrink-0 active:bg-slate-300"
                                   title="播放短语"
                                 >
                                   <Volume2 size={16} className="text-slate-600" />
@@ -544,15 +565,23 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
                         {/* 语音播放按钮 - 英音和美音 */}
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => speakText(selectedWord.word, 'en-GB')}
-                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              hasUserInteracted.current = true; // 标记用户已交互
+                              speakText(selectedWord.word, 'en-GB');
+                            }}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors active:bg-slate-200"
                             title="英音发音"
                           >
                             <Volume2 size={20} className="text-slate-600" />
                           </button>
                           <button
-                            onClick={() => speakText(selectedWord.word, 'en-US')}
-                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              hasUserInteracted.current = true; // 标记用户已交互
+                              speakText(selectedWord.word, 'en-US');
+                            }}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors active:bg-slate-200"
                             title="美音发音"
                           >
                             <Volume2 size={20} className="text-slate-600" />
@@ -594,8 +623,12 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="font-semibold text-slate-800 text-base">{p.phrase}</div>
                                   <button
-                                    onClick={() => speakText(p.phrase, 'en-US')}
-                                    className="p-1.5 hover:bg-slate-200 rounded-full transition-colors flex-shrink-0"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      hasUserInteracted.current = true; // 标记用户已交互
+                                      speakText(p.phrase, 'en-US');
+                                    }}
+                                    className="p-1.5 hover:bg-slate-200 rounded-full transition-colors flex-shrink-0 active:bg-slate-300"
                                     title="播放短语"
                                   >
                                     <Volume2 size={16} className="text-slate-600" />
