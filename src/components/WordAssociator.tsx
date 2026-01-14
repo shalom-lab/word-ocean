@@ -180,7 +180,7 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
       // 延迟一点播放，确保页面已经渲染
       const timer = setTimeout(() => {
         speakText(selectedWord.word, 'en-US');
-      }, 300);
+      }, 100);
       
       return () => clearTimeout(timer);
     }
