@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, BookOpen, Shuffle, Loader2 } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { Search, BookOpen, Shuffle, Loader2, Volume2 } from 'lucide-react';
 import type { WordData } from '../types';
 import { detectRoot, ROOT_DICTIONARY } from '../utils/wordRoots';
 import { getEditDistance } from '../utils/editDistance';
@@ -119,6 +119,34 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
 
     return () => clearTimeout(timeoutId);
   }, [selectedWord, showTypes.semantic, wordSet, processedWords]);
+
+  // 语音播放函数
+  const speakText = useCallback((text: string, lang: 'en-US' | 'en-GB' = 'en-US') => {
+    if ('speechSynthesis' in window) {
+      // 停止当前播放
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = 0.9; // 稍微慢一点，更清晰
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      window.speechSynthesis.speak(utterance);
+    }
+  }, []);
+
+  // 当选中单词时自动播放美音
+  useEffect(() => {
+    if (selectedWord) {
+      // 延迟一点播放，确保页面已经渲染
+      const timer = setTimeout(() => {
+        speakText(selectedWord.word, 'en-US');
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedWord, speakText]);
 
   // 获取关联单词
   const associatedWords = useMemo((): AssociatedWord[] => {
@@ -365,18 +393,37 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
                   <div className="p-4 md:p-6">
                     {/* 单词标题区域 - 美化 */}
                     <div className="mb-4 md:mb-6 pb-4 md:pb-6 border-b border-slate-200">
-                      <div className="flex items-center gap-3 md:gap-4 mb-3 flex-wrap">
-                        <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                          {selectedWord.word}
-                        </h2>
-                        {selectedWord.root && (
-                          <span
-                            className="px-4 py-2 rounded-full text-sm font-semibold text-white shadow-md"
-                            style={{ backgroundColor: selectedWord.color }}
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+                        <div className="flex items-center gap-3 md:gap-4 flex-wrap">
+                          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                            {selectedWord.word}
+                          </h2>
+                          {selectedWord.root && (
+                            <span
+                              className="px-4 py-2 rounded-full text-sm font-semibold text-white shadow-md"
+                              style={{ backgroundColor: selectedWord.color }}
+                            >
+                              {selectedWord.root}
+                            </span>
+                          )}
+                        </div>
+                        {/* 语音播放按钮 - 英音和美音 */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => speakText(selectedWord.word, 'en-GB')}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            title="英音发音"
                           >
-                            {selectedWord.root}
-                          </span>
-                        )}
+                            <Volume2 size={20} className="text-slate-600" />
+                          </button>
+                          <button
+                            onClick={() => speakText(selectedWord.word, 'en-US')}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            title="美音发音"
+                          >
+                            <Volume2 size={20} className="text-slate-600" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-lg md:text-xl text-slate-700 font-medium">{selectedWord.mean}</p>
                     </div>
@@ -409,7 +456,16 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
                         <div className="grid grid-cols-1 gap-3 md:gap-4">
                           {selectedWord.data.phrases.map((p, i) => (
                             <div key={i} className="bg-slate-50 rounded-lg p-4 hover:bg-slate-100 transition-colors">
-                              <div className="font-semibold text-slate-800 mb-2 text-base">{p.phrase}</div>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="font-semibold text-slate-800 text-base">{p.phrase}</div>
+                                <button
+                                  onClick={() => speakText(p.phrase, 'en-US')}
+                                  className="p-1.5 hover:bg-slate-200 rounded-full transition-colors flex-shrink-0"
+                                  title="播放短语"
+                                >
+                                  <Volume2 size={16} className="text-slate-600" />
+                                </button>
+                              </div>
                               <div className="text-slate-600 text-sm">{p.translation}</div>
                             </div>
                           ))}
@@ -450,18 +506,37 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
                   <div className="p-6 lg:p-8">
                     {/* 单词标题区域 - 美化 */}
                     <div className="mb-6 pb-6 border-b border-slate-200">
-                      <div className="flex items-center gap-4 mb-3 flex-wrap">
-                        <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                          {selectedWord.word}
-                        </h2>
-                        {selectedWord.root && (
-                          <span
-                            className="px-4 py-2 rounded-full text-sm font-semibold text-white shadow-md"
-                            style={{ backgroundColor: selectedWord.color }}
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-4">
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                            {selectedWord.word}
+                          </h2>
+                          {selectedWord.root && (
+                            <span
+                              className="px-4 py-2 rounded-full text-sm font-semibold text-white shadow-md"
+                              style={{ backgroundColor: selectedWord.color }}
+                            >
+                              {selectedWord.root}
+                            </span>
+                          )}
+                        </div>
+                        {/* 语音播放按钮 - 英音和美音 */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => speakText(selectedWord.word, 'en-GB')}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            title="英音发音"
                           >
-                            {selectedWord.root}
-                          </span>
-                        )}
+                            <Volume2 size={20} className="text-slate-600" />
+                          </button>
+                          <button
+                            onClick={() => speakText(selectedWord.word, 'en-US')}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            title="美音发音"
+                          >
+                            <Volume2 size={20} className="text-slate-600" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-xl text-slate-700 font-medium">{selectedWord.mean}</p>
                     </div>
@@ -495,7 +570,16 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
                           <div className="grid grid-cols-2 gap-4">
                             {selectedWord.data.phrases.map((p, i) => (
                               <div key={i} className="bg-slate-50 rounded-lg p-4 hover:bg-slate-100 transition-colors">
-                                <div className="font-semibold text-slate-800 mb-2 text-base">{p.phrase}</div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="font-semibold text-slate-800 text-base">{p.phrase}</div>
+                                  <button
+                                    onClick={() => speakText(p.phrase, 'en-US')}
+                                    className="p-1.5 hover:bg-slate-200 rounded-full transition-colors flex-shrink-0"
+                                    title="播放短语"
+                                  >
+                                    <Volume2 size={16} className="text-slate-600" />
+                                  </button>
+                                </div>
                                 <div className="text-slate-600 text-sm">{p.translation}</div>
                               </div>
                             ))}
