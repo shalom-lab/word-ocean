@@ -27,7 +27,3 @@ __pycache__/
 *.pyc
 venv/
 
-# Large data files (超过 GitHub 100MB 限制)
-data-process/qwen_embeddings_output.json
-data-process/qwen_embeddings_output.jsonl
-
