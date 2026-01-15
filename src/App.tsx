@@ -27,7 +27,7 @@ const DICTIONARY_LABELS: Record<DictionaryName, string> = {
 };
 
 function App() {
-  const [selectedDict, setSelectedDict] = useState<DictionaryName>('3-CET4-顺序');
+  const [selectedDict, setSelectedDict] = useState<DictionaryName>('4-CET6-顺序');
   const [wordData, setWordData] = useState<WordData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
