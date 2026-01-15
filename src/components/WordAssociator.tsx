@@ -128,28 +128,81 @@ export default function WordAssociator({ wordData }: WordAssociatorProps) {
     }
 
     try {
+      // 检查语音引擎是否可用
+      const synthesis = window.speechSynthesis;
+      
       // 停止当前播放
-      window.speechSynthesis.cancel();
+      synthesis.cancel();
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = 0.9; // 稍微慢一点，更清晰
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      
-      // 添加错误处理
-      utterance.onerror = (event) => {
-        console.error('语音播放错误:', event);
-      };
-      
-      utterance.onend = () => {
-        // 播放完成
-      };
-      
-      // 在移动端，确保在用户交互上下文中调用
-      window.speechSynthesis.speak(utterance);
+      // 等待一小段时间确保 cancel 完成（移动端可能需要）
+      setTimeout(() => {
+        try {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = lang;
+          utterance.rate = 0.9; // 稍微慢一点，更清晰
+          utterance.pitch = 1;
+          utterance.volume = 1;
+          
+          // 详细的错误处理
+          utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
+            // 获取错误类型和详细信息
+            const errorInfo = {
+              error: event.error,
+              type: event.type,
+              charIndex: event.charIndex,
+              charLength: event.charLength,
+              elapsedTime: event.elapsedTime,
+              name: event.name,
+            };
+            
+            // 根据错误类型提供更友好的提示
+            let errorMessage = '语音播放错误';
+            const errorCode = String(event.error);
+            
+            if (errorCode === 'network') {
+              errorMessage = '网络错误，无法加载语音';
+            } else if (errorCode === 'synthesis' || errorCode === 'synthesis-failed') {
+              errorMessage = '语音合成失败';
+            } else if (errorCode === 'synthesis-unavailable') {
+              errorMessage = '语音合成服务不可用';
+            } else if (errorCode === 'audio-busy') {
+              errorMessage = '音频设备忙碌';
+            } else if (errorCode === 'audio-hardware') {
+              errorMessage = '音频硬件错误';
+            } else if (errorCode === 'canceled') {
+              errorMessage = '语音播放已取消';
+            } else if (errorCode === 'interrupted') {
+              errorMessage = '语音播放被中断';
+            } else if (errorCode === 'invalid-argument') {
+              errorMessage = '无效参数（可能是语言不支持）';
+            } else if (errorCode === 'language-unavailable') {
+              errorMessage = `语言 ${lang} 不可用`;
+            } else if (errorCode === 'not-allowed') {
+              errorMessage = '语音播放权限被拒绝';
+            } else {
+              errorMessage = `错误代码: ${errorCode}`;
+            }
+            
+            // 只在 vConsole 中显示详细错误信息，避免在控制台刷屏
+            console.warn(`[语音播放] ${errorMessage}`, errorInfo);
+          };
+          
+          utterance.onend = () => {
+            // 播放完成
+          };
+          
+          utterance.onstart = () => {
+            // 播放开始
+          };
+          
+          // 在移动端，确保在用户交互上下文中调用
+          synthesis.speak(utterance);
+        } catch (error) {
+          console.warn('[语音播放] 创建或播放语音时出错:', error);
+        }
+      }, 50);
     } catch (error) {
-      console.error('语音播放失败:', error);
+      console.warn('[语音播放] 初始化失败:', error);
     }
   }, []);
 
